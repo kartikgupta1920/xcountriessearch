@@ -4,12 +4,21 @@ import './App.css';
 const App = () => {
   const [countries, setCountries] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetch('https://restcountries.com/v3.1/all')
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
       .then(data => setCountries(data))
-      .catch(error => console.error('Error fetching countries:', error));
+      .catch(error => {
+        console.error('Error fetching countries:', error);
+        setError('Failed to load countries. Please try again later.');
+      });
   }, []);
 
   const filteredCountries = countries.filter(country =>
@@ -24,18 +33,22 @@ const App = () => {
         value={searchTerm}
         onChange={e => setSearchTerm(e.target.value)}
       />
-      <div className="countryGrid">
-        {filteredCountries.length > 0 ? (
-          filteredCountries.map(country => (
-            <div className="countryCard" key={country.cca3}>
-              <img src={country.flags.png} alt={`${country.name.common} flag`} />
-              <h3>{country.name.common}</h3>
-            </div>
-          ))
-        ) : (
-          <p>No countries found</p>
-        )}
-      </div>
+      {error ? (
+        <p className="error">{error}</p>
+      ) : (
+        <div className="countryGrid">
+          {filteredCountries.length > 0 ? (
+            filteredCountries.map(country => (
+              <div className="countryCard" key={country.cca3}>
+                <img src={country.flags.png} alt={`${country.name.common} flag`} />
+                <h2>{country.name.common}</h2>
+              </div>
+            ))
+          ) : (
+            <p className="noCountries">No countries found</p>
+          )}
+        </div>
+      )}
     </div>
   );
 };
